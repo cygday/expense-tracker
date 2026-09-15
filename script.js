@@ -1,7 +1,7 @@
 const balance = document.getElementById('balance');
 const money_plus = document.getElementById('money-plus');
 const money_minus = document.getElementById('money-minus');
-const money_today = document.getElementById('money-today'); // 🟢 Target new element
+const money_today = document.getElementById('money-today'); 
 const list = document.getElementById('list');
 const form = document.getElementById('form');
 const text = document.getElementById('text');
@@ -15,11 +15,15 @@ let transactions = localStorage.getItem('transactions') !== null
 function addTransaction(e) {
     e.preventDefault();
 
+    if (text.value.trim() === '' || amount.value.trim() === '') {
+        return;
+    }
+
     const transaction = {
         id: generateID(),
         text: text.value,
         amount: +amount.value,
-        date: new Date().toLocaleDateString() // 🟢 Capture date stamp (MM/DD/YYYY format)
+        date: new Date().toLocaleDateString() // Capture date stamp (MM/DD/YYYY format)
     };
 
     transactions.push(transaction);
@@ -41,13 +45,34 @@ function addTransactionDOM(transaction) {
 
     item.classList.add(transaction.amount < 0 ? 'minus' : 'plus');
     
-    // Optional display: appends the date next to the text description
-    const displayDate = transaction.date ? `<small style="color:#999; margin-left:8px;">(${transaction.date})</small>` : '';
+    // Create text wrap container to cleanly handle internal DOM layout securely
+    const contentSpan = document.createElement('span');
+    contentSpan.textContent = transaction.text;
 
-    item.innerHTML = `
-        ${transaction.text} ${displayDate} <span>${sign}$${Math.abs(transaction.amount).toFixed(2)}</span>
-        <button class="delete-btn" onclick="removeTransaction(${transaction.id})">x</button>
-    `;
+    // Optional display: appends the date next to the text description safely
+    if (transaction.date) {
+        const dateSmall = document.createElement('small');
+        dateSmall.style.color = '#999';
+        dateSmall.style.marginLeft = '8px';
+        dateSmall.textContent = `(${transaction.date})`;
+        contentSpan.appendChild(dateSmall);
+    }
+
+    const amountSpan = document.createElement('span');
+    // FIXED: Corrected currency symbol from '$' to 'Nrs' to match balance cards
+    amountSpan.textContent = `${sign}Nrs${Math.abs(transaction.amount).toFixed(2)}`;
+
+    // Create accessible, securely-bound delete button without inline handlers
+    const deleteBtn = document.createElement('button');
+    deleteBtn.classList.add('delete-btn');
+    deleteBtn.textContent = 'x';
+    deleteBtn.setAttribute('aria-label', `Delete ${transaction.text}`);
+    deleteBtn.addEventListener('click', () => removeTransaction(transaction.id));
+
+    // Assembly sequence
+    item.appendChild(contentSpan);
+    item.appendChild(amountSpan);
+    item.appendChild(deleteBtn);
 
     list.appendChild(item);
 }
@@ -55,7 +80,7 @@ function addTransactionDOM(transaction) {
 // Update figures
 function updateValues() {
     const amounts = transactions.map(transaction => transaction.amount);
-    const todayStr = new Date().toLocaleDateString(); // Get today's local string
+    const todayStr = new Date().toLocaleDateString(); 
 
     // 1. Total Balance
     const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
@@ -71,16 +96,16 @@ function updateValues() {
         amounts.filter(item => item < 0).reduce((acc, item) => (acc += item), 0) * -1
     ).toFixed(2);
 
-    // 🟢 4. NEW CALCULATIONS FOR TODAY'S EXPENSES ONLY
+    // 4. CALCULATIONS FOR TODAY'S EXPENSES ONLY
     const todayExpense = transactions
-        .filter(t => t.date === todayStr && t.amount < 0) // Filter for matching date and negative amounts
+        .filter(t => t.date === todayStr && t.amount < 0) 
         .reduce((acc, t) => acc + t.amount, 0) * -1;
 
-    // Apply values to HTML elements
-    balance.innerText = `Nrs${total}`;
-    money_plus.innerText = `+Nrs${income}`;
-    money_minus.innerText = `-Nrs${expense}`;
-    money_today.innerText = `Nrs${todayExpense.toFixed(2)}`; // Set today's display
+    // Apply values to HTML elements securely
+    balance.textContent = `Nrs${total}`;
+    money_plus.textContent = `+Nrs${income}`;
+    money_minus.textContent = `-Nrs${expense}`;
+    money_today.textContent = `Nrs${todayExpense.toFixed(2)}`; 
 }
 
 function removeTransaction(id) {

@@ -47,6 +47,10 @@ input[type='text'], input[type='number'] {
     box-sizing: border-box;
     margin-bottom: 10px;
 }
+input:focus, .btn:focus, .delete-btn:focus {
+    outline: 2px solid #9c27b0;
+    outline-offset: 2px;
+}
 .btn {
     cursor: pointer;
     background-color: #9c27b0;
@@ -89,4 +93,9 @@ input[type='text'], input[type='number'] {
     opacity: 0;
     transition: opacity 0.3s ease;
 }
-.list li:hover .delete-btn { opacity: 1; }
+/* IMPROVEMENT: Reveals the delete button instantly on hover, focus, or when keyboard-navigating inside the list item */
+.list li:hover .delete-btn,
+.list li:focus-within .delete-btn,
+.delete-btn:focus { 
+    opacity: 1; 
+}
